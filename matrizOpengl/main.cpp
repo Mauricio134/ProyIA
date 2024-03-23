@@ -21,7 +21,7 @@ struct nodo {
     nodo() {
         id = "";
     }
-    nodo(string id_, float x, float y, float z = 0) {
+    nodo(string id_, float x, float y, float z = 0.0f) {
         id = id_;
         coordenadas.push_back(x);
         coordenadas.push_back(y);
