@@ -19,8 +19,10 @@ using namespace std;
 struct nodo {
     string id;
     vector<pair<nodo*, float>> listaConexos;
+    vector<nodo*> listaCosto;
     map <string, bool> recorrido;
     double dist_euc;
+    double costo = 0;
     vector<nodo*> rflags;
     vector<float>coordenadas;
     nodo() {
@@ -109,6 +111,9 @@ void detect_fin(nodo*& ini, int fin, vector<nodo*>& camino, bool& S) {
 bool compararPorDistEuc(const pair<nodo*, float>& a, const pair<nodo*, float>& b) {
     return a.first->dist_euc > b.first->dist_euc;
 }
+bool compararPorDistCost(nodo*& a, nodo*& b) {
+    return a->costo > b->costo;
+}
 
 void hill(vector<vector<nodo*>>& mt, int ini, int fin, vector<nodo*>& camino) {
     nodo* start = mt[ini / 20][ini % 20];
@@ -132,16 +137,63 @@ void hill(vector<vector<nodo*>>& mt, int ini, int fin, vector<nodo*>& camino) {
                 if (f == 1)
                     minNode = camino.back()->listaConexos[i].first;
             }
-            /*else if (camino.back()->listaConexos[i].first->id != "" && camino.back()->listaConexos[i].first->dist_euc < minNode->dist_euc) {
+        }
+        bool p = 1;
+        for (int i = 0; i < camino.size(); i++) {
+            if (minNode->id == camino[i]->id) {
+                camino.back()->rflags.push_back(minNode);
+                p = 0;
+                break;
+            }
+        }
+        if (p == 1) {
+            camino.push_back(minNode);
+        }
+        else {
+            camino.pop_back();
+            camino.back()->rflags.push_back(minNode);
+        }
+        detect_fin(start, fin, camino, S);
+    }
+    return;
+}
+
+void calcuCost(nodo*& node) {
+    int id = stoi(node->id);
+    for (int i=0; i<node->listaConexos.size(); i++) {
+        if (node->listaConexos[i].first->id != "") {
+            node->listaCosto.push_back(node->listaConexos[i].first);
+            if (stoi(node->listaConexos[i].first->id) == (id - 21) || stoi(node->listaConexos[i].first->id) == (id - 19) || stoi(node->listaConexos[i].first->id) == (id + 21) || stoi(node->listaConexos[i].first->id) == (id + 19))
+                node->listaConexos[i].first->costo = node->listaConexos[i].first->dist_euc + 14.14;
+            else
+                node->listaConexos[i].first->costo = node->listaConexos[i].first->dist_euc + 10; 
+        }
+    }
+}
+
+void aAst(vector<vector<nodo*>>& mt, int ini, int fin, vector<nodo*>& camino) {
+    nodo* start = mt[ini / 20][ini % 20];
+    camino.push_back(start);
+    if (ini == fin) {
+        return;
+    }
+    bool S = 1;
+    while (camino[camino.size() - 1]->id != to_string(fin) && S == 1) {
+        nodo* minNode = camino.back();
+        calcuCost(minNode);
+        sort(camino.back()->listaCosto.begin(), camino.back()->listaCosto.end(), compararPorDistCost);
+        for (int i = 0; i < camino[camino.size() - 1]->listaCosto.size(); i++) {
+            bool f = 1;
+            if (camino.back()->listaCosto[i]->id != "" /* && camino.back()->listaConexos[i].first->dist_euc > minNode->dist_euc*/) {
                 for (int j = 0; j < camino.back()->rflags.size(); j++) {
-                    if (camino.back()->listaConexos[i].first->id == camino.back()->rflags[j]->id) {
+                    if (camino.back()->listaCosto[i]->id == camino.back()->rflags[j]->id) {
                         f = 0;
                         break;
                     }
                 }
                 if (f == 1)
-                    minNode = camino.back()->listaConexos[i].first;
-            }*/
+                    minNode = camino.back()->listaCosto[i];
+            }
         }
         bool p = 1;
         for (int i = 0; i < camino.size(); i++) {
@@ -171,7 +223,6 @@ void borrar(vector<vector<nodo*>>& mt) {
     num = generarNumerosAleatoriosUnicos(0, 399, porcentaje);
 
     for (int i = 0; i < num.size(); i++) {
-        //cout << num[i] << " ";
         (*(mt[num[i] / 20][num[i] % 20])).delet();
     }
 }
@@ -309,10 +360,21 @@ int main() {
     }
     cout << endl;
     //freopen("input.txt", "r", stdin);
+    
+    camino.clear();
+    aAst(mt, ini, fin, camino);
+    if (camino.size() == 1 && camino.back()->id != to_string(fin)) {
+        cout << "No hay camino" << endl;
+    }
+    else {
+        for (int o = 0; o < camino.size(); o++) {
+            cout << camino[o]->id << " ";
+        }
+    }
+    cout << endl;
     int inicio;
     cin >> inicio >> fin;
     Profundidad(mt, inicio, fin);
     Amplitud(mt, inicio, fin);
     return 0;
 }
-
